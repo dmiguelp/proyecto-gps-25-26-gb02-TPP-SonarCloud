@@ -103,8 +103,7 @@ def add_payment_method(body=None):
         body = PaymentMethod.from_dict(connexion.request.get_json())
 
         # --- VERIFICAR TOKEN ---
-        token = connexion.request.cookies.get("token")
-        user_id, error_response = verify_token_and_get_user_id(token)
+        user_id, error_response = verify_token_and_get_user_id()
         if error_response:
             return error_response
         # --- VERIFICAR TOKEN ---
@@ -193,8 +192,7 @@ def delete_payment_method(payment_method_id):
     try:
 
         # --- VERIFICAR TOKEN ---
-        token = connexion.request.cookies.get("token")
-        user_id, error_response = verify_token_and_get_user_id(token)
+        user_id, error_response = verify_token_and_get_user_id()
         if error_response:
             return error_response
         # --- VERIFICAR TOKEN ---
@@ -293,8 +291,7 @@ def show_user_payment_methods():
     try:
 
         # --- VERIFICAR TOKEN ---
-        token = connexion.request.cookies.get("token")
-        user_id, error_response = verify_token_and_get_user_id(token)
+        user_id, error_response = verify_token_and_get_user_id()
         if error_response:
             return error_response
         # --- VERIFICAR TOKEN ---

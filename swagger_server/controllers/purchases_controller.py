@@ -142,8 +142,7 @@ def set_purchase(body=None):
         body = Purchase.from_dict(connexion.request.get_json())
 
         # --- VERIFICAR TOKEN ---
-        token = connexion.request.cookies.get("token")
-        user_id, error_response = verify_token_and_get_user_id(token)
+        user_id, error_response = verify_token_and_get_user_id()
         if error_response:
             return error_response
         # --- VERIFICAR TOKEN ---

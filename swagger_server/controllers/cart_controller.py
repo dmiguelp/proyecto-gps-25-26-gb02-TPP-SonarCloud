@@ -87,8 +87,7 @@ def add_to_cart(body=None):
         body = CartBody.from_dict(connexion.request.get_json())
 
         # --- VERIFICAR TOKEN ---
-        token = connexion.request.cookies.get("token")
-        user_id, error_response = verify_token_and_get_user_id(token)
+        user_id, error_response = verify_token_and_get_user_id()
         if error_response:
             return error_response
         # --- VERIFICAR TOKEN ---
@@ -183,8 +182,7 @@ def get_cart_products():
     db_conexion = None
     try:
         # --- VERIFICAR TOKEN ---
-        token = connexion.request.cookies.get("token")
-        user_id, error_response = verify_token_and_get_user_id(token)
+        user_id, error_response = verify_token_and_get_user_id()
         if error_response:
             return error_response
         # --- VERIFICAR TOKEN ---
@@ -346,8 +344,7 @@ def remove_from_cart(product_id, type):
     db_conexion = None
     try:
         # --- VERIFICAR TOKEN ---
-        token = connexion.request.cookies.get("token")
-        user_id, error_response = verify_token_and_get_user_id(token)
+        user_id, error_response = verify_token_and_get_user_id()
         if error_response:
             return error_response
         # --- VERIFICAR TOKEN ---

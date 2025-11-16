@@ -1,19 +1,16 @@
 from typing import List
 import requests
+import connexion
+from swagger_server.models.error import Error
 """
-controller generated to handled auth operation described at:
-https://connexion.readthedocs.io/en/latest/security.html
+Controlador de autorización y autenticación.
 """
 
 AUTH_SERVER = '10.1.1.4:8080'
 
 def is_valid_token(token):
     """
-    Valida un token.
-    En producción, implementa:
-    - Validación JWT
-    - Consulta a BD de sesiones/usuarios
-    - Integración con OAuth/IAM
+    # Delega validación del token al servidor de autenticación
     """
     resp = requests.get(f"{AUTH_SERVER}/auth", timeout=2, headers={"Accept": "application/json", "Cookie":f"oversound_auth={token}"})
     
@@ -77,19 +74,33 @@ def check_bandcamp_auth(api_key, required_scopes):
     return user_info
 
 
-def verify_token_and_get_user_id(token):
+def verify_token_and_get_user_id():
     """
-    Verifica el token y extrae el ID de usuario.
+    Verifica el token de la cookie actual y extrae el ID de usuario.
     
-    Args:
-        token: Token de autenticación desde la cookie
-        
+    Obtiene automáticamente el token de la cookie 'token' de la request actual
+    y verifica su validez con el servidor de autenticación.
+    
     Returns:
         tuple: (user_id, error_response) 
                Si es válido: (user_id, None)
-               Si es inválido: (None, error_response)
+               Si es inválido: (None, (Error, status_code))
+    
+    Examples:
+        En un controller:
+            >>> user_id, error = verify_token_and_get_user_id()
+            >>> if error:
+            ...     return error
+            >>> # Continuar con user_id válido
+    
+    Note:
+        - Obtiene el token automáticamente de connexion.request.cookies
+        - Retorna tupla (user_id, error) para manejo explícito de errores
+        - Los controladores DEBEN verificar si hay error antes de continuar
+        - Si hay error, el controller debe retornar inmediatamente
     """
-    from swagger_server.models.error import Error
+    # Obtener token de la cookie
+    token = connexion.request.cookies.get('token')
     
     if not token:
         error = Error(code="401", message="Token de usuario no encontrado.")
@@ -113,3 +124,6 @@ def verify_token_and_get_user_id(token):
     except requests.exceptions.RequestException as e:
         error = Error(code="503", message=f"No se pudo contactar con el microservicio de autenticación: {e}")
         return None, (error, 503)
+    except Exception as e:
+        error = Error(code="500", message=f"Error inesperado al verificar token: {e}")
+        return None, (error, 500)

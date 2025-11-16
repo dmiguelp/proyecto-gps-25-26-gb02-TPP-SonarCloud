@@ -47,12 +47,10 @@ Performance:
     - Implementa paginación para optimizar transferencia de datos
 """
 
-import connexion
-import httpx
+import requests
 from swagger_server.models.error import Error
 from swagger_server.models.product import Product
-from swagger_server.dbconx import dbConectar, dbDesconectar
-from swagger_server.controllers.config import USER_SERVICE_URL, TYA_SERVICE_URL
+from swagger_server.controllers.config import TYA_SERVICE_URL
 
 def show_storefront_products(page=1, limit=20):
     """
@@ -179,58 +177,90 @@ def show_storefront_products(page=1, limit=20):
         - Listas de colaboradores/canciones se convierten a strings
     
     Note:
-        - El parámetro 'conexion' se declara pero no se usa (posible código legacy)
-        - Considerar eliminar o implementar pooling de conexiones si es necesario
+        - Este controlador NO utiliza base de datos
+        - Todos los datos provienen del microservicio TyA
         - Los géneros se manejan como el primer elemento de la lista de TyA
     """
-    conexion = None
     try:
         productos = []
 
         # --- Obtener datos del microservicio Temas y Autores ---
         try:
-            with httpx.Client(timeout=5.0) as client:
-                # PASO 1: Obtener IDs usando endpoints /filter (sin parámetros = todos)
-                # -----------------------------------------------------------------------
-                # Los endpoints /song/filter, /album/filter y /merch/filter retornan
-                # listas de objetos con solo los IDs cuando se llaman sin parámetros.
-                # Esto es más eficiente que obtener objetos completos inicialmente.
-                # Formato de respuesta: [{"songId": 1}, {"songId": 2}, ...]
-                song_ids_response = client.get(f"{TYA_SERVICE_URL}/song/filter").json()
-                album_ids_response = client.get(f"{TYA_SERVICE_URL}/album/filter").json()
-                merch_ids_response = client.get(f"{TYA_SERVICE_URL}/merch/filter").json()
-                
-                # Extraer solo los IDs numéricos de los objetos de respuesta
-                # Validación: solo incluye items que tengan el campo ID correspondiente
-                song_ids = [item.get("songId") for item in song_ids_response if item.get("songId")]
-                album_ids = [item.get("albumId") for item in album_ids_response if item.get("albumId")]
-                merch_ids = [item.get("merchId") for item in merch_ids_response if item.get("merchId")]
-                
-                # PASO 2: Obtener detalles completos usando endpoints /list
-                # ----------------------------------------------------------
-                # Los endpoints /song/list, /album/list y /merch/list aceptan múltiples
-                # IDs en formato comma-separated (ej: "1,2,3,5,8") y retornan los objetos
-                # completos con toda la información (title, price, cover, etc.).
-                # Esto permite hacer batch requests en lugar de N peticiones individuales.
-                canciones = []
-                albumes = []
-                merch = []
-                
-                # Solo hacer petición si existen IDs (optimización)
-                if song_ids:
-                    ids_str = ",".join(map(str, song_ids))  # Convertir lista a "1,2,3,..."
-                    canciones = client.get(f"{TYA_SERVICE_URL}/song/list?ids={ids_str}").json()
-                
-                if album_ids:
-                    ids_str = ",".join(map(str, album_ids))
-                    albumes = client.get(f"{TYA_SERVICE_URL}/album/list?ids={ids_str}").json()
-                
-                if merch_ids:
-                    ids_str = ",".join(map(str, merch_ids))
-                    merch = client.get(f"{TYA_SERVICE_URL}/merch/list?ids={ids_str}").json()
+            # PASO 1: Obtener IDs usando endpoints /filter (sin parámetros = todos)
+            # -----------------------------------------------------------------------
+            # Los endpoints /song/filter, /album/filter y /merch/filter retornan
+            # listas de objetos con solo los IDs cuando se llaman sin parámetros.
+            # Esto es más eficiente que obtener objetos completos inicialmente.
+            # Formato de respuesta: [{"songId": 1}, {"songId": 2}, ...]
+            
+            song_ids_response = requests.get(
+                f"{TYA_SERVICE_URL}/song/filter",
+                timeout=5.0,
+                headers={"Accept": "application/json"}
+            )
+            album_ids_response = requests.get(
+                f"{TYA_SERVICE_URL}/album/filter",
+                timeout=5.0,
+                headers={"Accept": "application/json"}
+            )
+            merch_ids_response = requests.get(
+                f"{TYA_SERVICE_URL}/merch/filter",
+                timeout=5.0,
+                headers={"Accept": "application/json"}
+            )
+            
+            # Extraer solo los IDs numéricos de los objetos de respuesta
+            # Validación: solo incluye items que tengan el campo ID correspondiente
+            song_ids = [item.get("songId") for item in song_ids_response.json() if item.get("songId")] if song_ids_response.ok else []
+            album_ids = [item.get("albumId") for item in album_ids_response.json() if item.get("albumId")] if album_ids_response.ok else []
+            merch_ids = [item.get("merchId") for item in merch_ids_response.json() if item.get("merchId")] if merch_ids_response.ok else []
+            
+            # PASO 2: Obtener detalles completos usando endpoints /list
+            # ----------------------------------------------------------
+            # Los endpoints /song/list, /album/list y /merch/list aceptan múltiples
+            # IDs en formato comma-separated (ej: "1,2,3,5,8") y retornan los objetos
+            # completos con toda la información (title, price, cover, etc.).
+            # Esto permite hacer batch requests en lugar de N peticiones individuales.
+            canciones = []
+            albumes = []
+            merch = []
+            
+            # Solo hacer petición si existen IDs (optimización)
+            if song_ids:
+                ids_str = ",".join(map(str, song_ids))  # Convertir lista a "1,2,3,..."
+                response = requests.get(
+                    f"{TYA_SERVICE_URL}/song/list?ids={ids_str}",
+                    timeout=5.0,
+                    headers={"Accept": "application/json"}
+                )
+                if response.ok:
+                    canciones = response.json()
+            
+            if album_ids:
+                ids_str = ",".join(map(str, album_ids))
+                response = requests.get(
+                    f"{TYA_SERVICE_URL}/album/list?ids={ids_str}",
+                    timeout=5.0,
+                    headers={"Accept": "application/json"}
+                )
+                if response.ok:
+                    albumes = response.json()
+            
+            if merch_ids:
+                ids_str = ",".join(map(str, merch_ids))
+                response = requests.get(
+                    f"{TYA_SERVICE_URL}/merch/list?ids={ids_str}",
+                    timeout=5.0,
+                    headers={"Accept": "application/json"}
+                )
+                if response.ok:
+                    merch = response.json()
                     
-        except Exception as e:
+        except requests.RequestException as e:
             print(f"Error al conectar con Temas y Autores: {e}")
+            canciones, albumes, merch = [], [], []
+        except Exception as e:
+            print(f"Error inesperado al obtener datos de TyA: {e}")
             canciones, albumes, merch = [], [], []
 
         # --- Mapear / Enmascarar canciones ---
@@ -324,7 +354,4 @@ def show_storefront_products(page=1, limit=20):
 
     except Exception as e:
         print(f"Error general al obtener los productos: {e}")
-        return Error(code="500", message=str(e))
-    finally:
-        if conexion:
-            dbDesconectar(conexion)
+        return Error(code="500", message=str(e)), 500
