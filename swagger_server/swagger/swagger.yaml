@@ -44,7 +44,7 @@ paths:
           maximum: 100
       responses:
         "200":
-          description: Products returned successfully with pagination metadata.
+          description: Products returned successfully with pagination metadata, genres catalog, and artists catalog.
           content:
             application/json:
               schema:
@@ -69,6 +69,30 @@ paths:
                       totalPages:
                         type: integer
                         example: 8
+                  genres:
+                    type: array
+                    description: Complete catalog of available genres from TyA
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        name:
+                          type: string
+                          example: "Rock"
+                  artists:
+                    type: array
+                    description: Complete catalog of available artists from TyA
+                    items:
+                      type: object
+                      properties:
+                        artistId:
+                          type: integer
+                          example: 42
+                        artisticName:
+                          type: string
+                          example: "Queen"
                 x-content-type: application/json
         "400":
           description: Bad request.
@@ -151,10 +175,11 @@ paths:
           type: integer
       - name: type
         in: query
-        required: true
+        required: false
         explode: false
         schema:
-          type: string     
+          type: string
+        description: "Product type: 'song'/'0', 'album'/'1', 'merch'/'2'. If not specified, searches all tables."     
       responses:
         "200":
           description: Product removed from cart successfully.

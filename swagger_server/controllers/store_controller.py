@@ -341,7 +341,47 @@ def show_storefront_products(page=1, limit=20):
         # Aplicar paginación sobre la lista completa
         productos_paginados = productos[start_index:end_index]
         
-        # --- Retornar respuesta con datos paginados y metadata ---
+        # --- Obtener catálogos de géneros y artistas (para filtros del frontend) ---
+        all_genres = []
+        all_artists = []
+        
+        try:
+            # Obtener lista completa de géneros
+            genres_response = requests.get(
+                f"{TYA_SERVICE_URL}/genres",
+                timeout=5.0,
+                headers={"Accept": "application/json"}
+            )
+            if genres_response.ok:
+                all_genres = genres_response.json()
+        except requests.RequestException as e:
+            print(f"Error obteniendo géneros: {e}")
+        
+        try:
+            # Obtener IDs de artistas
+            artist_ids_response = requests.get(
+                f"{TYA_SERVICE_URL}/artist/filter",
+                timeout=5.0,
+                headers={"Accept": "application/json"}
+            )
+            if artist_ids_response.ok:
+                artist_ids = [item.get("artistId") for item in artist_ids_response.json() if item.get("artistId")]
+                
+                # Obtener detalles completos de artistas
+                if artist_ids:
+                    ids_str = ",".join(map(str, artist_ids))
+                    artists_response = requests.get(
+                        f"{TYA_SERVICE_URL}/artist/list",
+                        params={"ids": ids_str},
+                        timeout=5.0,
+                        headers={"Accept": "application/json"}
+                    )
+                    if artists_response.ok:
+                        all_artists = artists_response.json()
+        except requests.RequestException as e:
+            print(f"Error obteniendo artistas: {e}")
+        
+        # --- Retornar respuesta con datos paginados, metadata y catálogos ---
         return {
             "data": [p.to_dict() for p in productos_paginados],
             "pagination": {
@@ -349,7 +389,9 @@ def show_storefront_products(page=1, limit=20):
                 "limit": limit,
                 "total": total_productos,
                 "totalPages": total_pages
-            }
+            },
+            "genres": all_genres,
+            "artists": all_artists
         }
 
     except Exception as e:

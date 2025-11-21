@@ -290,27 +290,28 @@ def get_cart_products():
             dbDesconectar(db_conexion)
 
 
-def remove_from_cart(productId, type):
+def remove_from_cart(productId, type=None):
     """
     Elimina un producto del carrito del usuario autenticado.
     
-    Permite eliminar canciones, álbumes o merchandising del carrito según
-    el tipo especificado. El producto se elimina completamente del carrito
-    (no reduce cantidades, elimina la entrada).
+    Permite eliminar canciones, álbumes o merchandising del carrito.
+    Si no se especifica 'type', intenta eliminar el producto de todas las tablas.
     
     Tipos de producto soportados:
         - "song" o "0": Canción
         - "album" o "1": Álbum
         - "merch" o "2": Merchandising
+        - None: Busca en todas las tablas
     
     Operaciones en BD:
         - DELETE en CancionesCarrito si type es "song" o "0"
         - DELETE en AlbumesCarrito si type es "album" o "1"
         - DELETE en MerchCarrito si type es "merch" o "2"
+        - Si type es None, intenta eliminar de las 3 tablas
     
     Args:
-        product_id (int): ID del producto a eliminar del carrito.
-        type (str): Tipo de producto ("song"/"0", "album"/"1", "merch"/"2").
+        productId (int): ID del producto a eliminar del carrito.
+        type (str, optional): Tipo de producto ("song"/"0", "album"/"1", "merch"/"2").
     
     Returns:
         Tuple[Dict|Error, int]: Tupla con respuesta y código HTTP:
@@ -318,14 +319,15 @@ def remove_from_cart(productId, type):
             - (Error, 400): Tipo de producto inválido
             - (Error, 401): Token no encontrado
             - (Error, 403): Usuario no autorizado
+            - (Error, 404): Producto no encontrado en el carrito
             - (Error, 500): Error interno del servidor
     
     Examples:
         >>> # Eliminar canción con ID 42
         >>> remove_from_cart(42, "song")
         
-        >>> # Eliminar merch usando código numérico
-        >>> remove_from_cart(10, "2")
+        >>> # Eliminar sin especificar tipo (busca automáticamente)
+        >>> remove_from_cart(10)
     
     Note:
         - La función verifica que el producto exista en el carrito antes de eliminar
@@ -339,20 +341,43 @@ def remove_from_cart(productId, type):
     db_conexion = None
     try:
         # --- VERIFICAR TOKEN ---
-        user_id, error_response = verify_token_and_get_user_id()
-        if error_response:
-            return error_response
+        # Obtener user_id del contexto (ya validado por check_oversound_auth)
+        user_info = connexion.context.get('token_info')
+        user_id = user_info.get('id')
         # --- VERIFICAR TOKEN ---
 
         # Eliminar producto del carrito del usuario autenticado
         db_conexion = dbConectar()
         cursor = db_conexion.cursor()
 
-        # type: "song" -> song
-        # type: "album" -> album
-        # type: "merch" -> merch
-
-        if type == "song" or type == "0":
+        # Si no se especifica type, intentar eliminar de todas las tablas
+        if type is None:
+            deleted = False
+            
+            # Intentar eliminar de CancionesCarrito
+            cursor.execute("DELETE FROM CancionesCarrito WHERE idCancion = %s AND idUsuario = %s",
+                           (productId, user_id))
+            if cursor.rowcount > 0:
+                deleted = True
+            
+            # Intentar eliminar de AlbumesCarrito
+            if not deleted:
+                cursor.execute("DELETE FROM AlbumesCarrito WHERE idAlbum = %s AND idUsuario = %s",
+                               (productId, user_id))
+                if cursor.rowcount > 0:
+                    deleted = True
+            
+            # Intentar eliminar de MerchCarrito
+            if not deleted:
+                cursor.execute("DELETE FROM MerchCarrito WHERE idMerch = %s AND idUsuario = %s",
+                               (productId, user_id))
+                if cursor.rowcount > 0:
+                    deleted = True
+            
+            if not deleted:
+                return Error(code="404", message="El producto no está en el carrito"), 404
+        
+        elif type == "song" or type == "0":
             # Verificar que la canción existe en el carrito del usuario
             cursor.execute("SELECT 1 FROM CancionesCarrito WHERE idCancion = %s AND idUsuario = %s",
                            (productId, user_id))
