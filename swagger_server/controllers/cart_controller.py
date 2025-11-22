@@ -346,7 +346,7 @@ def get_cart_products():
             dbDesconectar(db_conexion)
 
 
-def remove_from_cart(productId, type=None):
+def remove_from_cart(product_id, type=None):
     """
     Elimina un producto del carrito del usuario autenticado.
     
@@ -366,7 +366,7 @@ def remove_from_cart(productId, type=None):
         - Si type es None, intenta eliminar de las 3 tablas
     
     Args:
-        productId (int): ID del producto a eliminar del carrito.
+        product_id (int): ID del producto a eliminar del carrito.
         type (str, optional): Tipo de producto ("song"/"0", "album"/"1", "merch"/"2").
     
     Returns:
@@ -412,21 +412,21 @@ def remove_from_cart(productId, type=None):
             
             # Intentar eliminar de CancionesCarrito
             cursor.execute("DELETE FROM CancionesCarrito WHERE idCancion = %s AND idUsuario = %s",
-                           (productId, user_id))
+                           (product_id, user_id))
             if cursor.rowcount > 0:
                 deleted = True
             
             # Intentar eliminar de AlbumesCarrito
             if not deleted:
                 cursor.execute("DELETE FROM AlbumesCarrito WHERE idAlbum = %s AND idUsuario = %s",
-                               (productId, user_id))
+                               (product_id, user_id))
                 if cursor.rowcount > 0:
                     deleted = True
             
             # Intentar eliminar de MerchCarrito
             if not deleted:
                 cursor.execute("DELETE FROM MerchCarrito WHERE idMerch = %s AND idUsuario = %s",
-                               (productId, user_id))
+                               (product_id, user_id))
                 if cursor.rowcount > 0:
                     deleted = True
             
@@ -436,30 +436,30 @@ def remove_from_cart(productId, type=None):
         elif type == "song" or type == "0":
             # Verificar que la canción existe en el carrito del usuario
             cursor.execute("SELECT 1 FROM CancionesCarrito WHERE idCancion = %s AND idUsuario = %s",
-                           (productId, user_id))
+                           (product_id, user_id))
             if not cursor.fetchone():
                 return Error(code="404", message="La canción no está en el carrito").to_dict(), 404
             
             cursor.execute("DELETE FROM CancionesCarrito WHERE idCancion = %s AND idUsuario = %s",
-                           (productId, user_id))
+                           (product_id, user_id))
         elif type == "album" or type == "1":
             # Verificar que el álbum existe en el carrito del usuario
             cursor.execute("SELECT 1 FROM AlbumesCarrito WHERE idAlbum = %s AND idUsuario = %s",
-                           (productId, user_id))
+                           (product_id, user_id))
             if not cursor.fetchone():
                 return Error(code="404", message="El álbum no está en el carrito").to_dict(), 404
             
             cursor.execute("DELETE FROM AlbumesCarrito WHERE idAlbum = %s AND idUsuario = %s",
-                           (productId, user_id))
+                           (product_id, user_id))
         elif type == "merch" or type == "2":
             # Verificar que el merch existe en el carrito del usuario
             cursor.execute("SELECT 1 FROM MerchCarrito WHERE idMerch = %s AND idUsuario = %s",
-                           (productId, user_id))
+                           (product_id, user_id))
             if not cursor.fetchone():
                 return Error(code="404", message="El artículo no está en el carrito").to_dict(), 404
             
             cursor.execute("DELETE FROM MerchCarrito WHERE idMerch = %s AND idUsuario = %s",
-                           (productId, user_id))
+                           (product_id, user_id))
         else:
             return Error(code="400", message="Tipo de producto inválido").to_dict(), 400
     
