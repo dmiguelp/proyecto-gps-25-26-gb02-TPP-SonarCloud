@@ -151,6 +151,9 @@ def set_purchase(body=None):
         # Conexión con la base de datos
         print("[DEBUG] create_purchase: Conectando a la base de datos")
         db_conexion = dbConectar()
+        if db_conexion is None:
+            print("[DEBUG] create_purchase: ERROR - No se pudo conectar a la base de datos")
+            return Error(code="503", message="Error al conectar con la base de datos").to_dict(), 503
         cursor = db_conexion.cursor()
         print("[DEBUG] create_purchase: Conexión establecida")
         
