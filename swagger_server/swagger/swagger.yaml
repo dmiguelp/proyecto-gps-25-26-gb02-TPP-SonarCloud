@@ -287,6 +287,66 @@ paths:
         - read:payment
       x-openapi-router-controller: swagger_server.controllers.payment_controller
   /purchase:
+    get:
+      tags:
+      - purchases
+      summary: Get purchase history for the authenticated user.
+      description: Returns a list of all purchases made by the authenticated user, including the products purchased in each transaction.
+      operationId: get_user_purchases
+      responses:
+        "200":
+          description: Purchase history returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    purchaseId:
+                      type: integer
+                      example: 42
+                    purchaseDate:
+                      type: string
+                      format: date-time
+                      example: "2025-11-25T14:30:00Z"
+                    purchasePrice:
+                      type: number
+                      format: float
+                      example: 29.97
+                    paymentMethodId:
+                      type: integer
+                      example: 5
+                    songIds:
+                      type: array
+                      items:
+                        type: integer
+                      example: [1, 5, 12]
+                    albumIds:
+                      type: array
+                      items:
+                        type: integer
+                      example: [2]
+                    merchIds:
+                      type: array
+                      items:
+                        type: array
+                        items:
+                          type: integer
+                        minItems: 2
+                        maxItems: 2
+                      description: "List of merch items as [id, quantity] pairs"
+                      example: [[5, 2], [8, 1]]
+        "500":
+          description: Generic error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+      - oversound_auth:
+        - read:purchases
+      x-openapi-router-controller: swagger_server.controllers.purchases_controller
     post:
       tags:
       - purchases
@@ -493,9 +553,13 @@ components:
         merchIds:
           type: array
           items:
-            type: integer
-          description: List of merch IDs to purchase
-          example: [1]
+            type: array
+            items:
+              type: integer
+            minItems: 2
+            maxItems: 2
+          description: "List of merch items to purchase as [id, quantity] pairs"
+          example: [[1, 2], [3, 1]]
       description: A purchase made by an user.
       example:
         purchasePrice: 10.99
@@ -503,7 +567,7 @@ components:
         paymentMethodId: 0
         songIds: [1, 2, 3]
         albumIds: [1, 2]
-        merchIds: [1]
+        merchIds: [[1, 2], [3, 1]]
     Error:
       required:
       - code

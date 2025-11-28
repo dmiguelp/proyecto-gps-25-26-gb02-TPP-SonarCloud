@@ -208,11 +208,20 @@ def set_purchase(body=None):
                 (id_compra, album_id)
             )
         
-        for merch_id in body.merch_ids:
-            cursor.execute(
-                "INSERT INTO MerchCompra (idCompra, idMerch) VALUES (%s, %s)",
-                (id_compra, merch_id)
-            )
+        # merch_ids viene como [[id, cantidad], [id, cantidad], ...]
+        for merch_item in body.merch_ids:
+            if isinstance(merch_item, list) and len(merch_item) == 2:
+                merch_id, cantidad = merch_item
+                cursor.execute(
+                    "INSERT INTO MerchCompra (idCompra, idMerch, cantidad) VALUES (%s, %s, %s)",
+                    (id_compra, merch_id, cantidad)
+                )
+            else:
+                # Retrocompatibilidad: si viene solo el ID, asumir cantidad 1
+                cursor.execute(
+                    "INSERT INTO MerchCompra (idCompra, idMerch, cantidad) VALUES (%s, %s, %s)",
+                    (id_compra, merch_item, 1)
+                )
         
         print(f"[DEBUG] create_purchase: Productos registrados para compra {id_compra}")
 
@@ -249,7 +258,9 @@ def set_purchase(body=None):
             # Eliminar merchandising del carrito
             if body.merch_ids:
                 print(f"[DEBUG] create_purchase: Eliminando {len(body.merch_ids)} items de merch del carrito: {body.merch_ids}")
-                for merch_id in body.merch_ids:
+                for merch_item in body.merch_ids:
+                    # Extraer el ID del merch (puede venir como [id, cantidad] o solo id)
+                    merch_id = merch_item[0] if isinstance(merch_item, list) else merch_item
                     cursor.execute(
                         "DELETE FROM MerchCarrito WHERE idMerch = %s AND idUsuario = %s",
                         (merch_id, user_id)
@@ -280,6 +291,116 @@ def set_purchase(body=None):
         if db_conexion:
             db_conexion.rollback()
         print(f"[DEBUG] create_purchase: EXCEPCIÓN - {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Error(code="500", message=str(e)).to_dict(), 500
+
+    finally:
+        if db_conexion:
+            dbDesconectar(db_conexion)
+
+
+def get_user_purchases():
+    """
+    Obtiene el historial de compras del usuario autenticado.
+    
+    Consulta todas las compras realizadas por el usuario, incluyendo los productos
+    adquiridos en cada transacción. Retorna información completa de cada compra:
+    ID, fecha, importe, método de pago y listas de productos.
+    
+    Returns:
+        Tuple[List[Dict], int]: Lista de compras y código HTTP 200, o Error en caso de fallo.
+            Cada compra incluye:
+                - purchaseId: ID de la compra
+                - purchaseDate: Fecha de la compra
+                - purchasePrice: Importe total
+                - paymentMethodId: ID del método de pago usado
+                - songIds: Lista de IDs de canciones compradas
+                - albumIds: Lista de IDs de álbumes comprados
+                - merchIds: Lista de IDs de merch comprado
+    """
+    print("[DEBUG] get_user_purchases: Inicio de la función")
+    db_conexion = None
+    try:
+        # Obtener user_id del contexto (ya validado por check_oversound_auth)
+        print("[DEBUG] get_user_purchases: Obteniendo user_id del contexto")
+        user_info = connexion.context.get('token_info')
+        user_id = user_info.get('userId') or user_info.get('id')
+        print(f"[DEBUG] get_user_purchases: user_id obtenido = {user_id}")
+
+        # Conectar a la base de datos
+        print("[DEBUG] get_user_purchases: Conectando a la base de datos")
+        db_conexion = dbConectar()
+        if db_conexion is None:
+            print("[DEBUG] get_user_purchases: ERROR - No se pudo conectar a la base de datos")
+            return Error(code="503", message="Error al conectar con la base de datos").to_dict(), 503
+        cursor = db_conexion.cursor()
+        print("[DEBUG] get_user_purchases: Conexión establecida")
+
+        # Obtener todas las compras del usuario
+        print(f"[DEBUG] get_user_purchases: Consultando compras del usuario {user_id}")
+        cursor.execute("""
+            SELECT idCompra, importe, fecha, metodoPago
+            FROM Compras
+            WHERE idUsuario = %s
+            ORDER BY fecha DESC
+        """, (user_id,))
+        
+        compras_rows = cursor.fetchall()
+        print(f"[DEBUG] get_user_purchases: Se encontraron {len(compras_rows)} compras")
+        
+        purchases = []
+        
+        for row in compras_rows:
+            purchase_id, importe, fecha, metodo_pago = row
+            print(f"[DEBUG] get_user_purchases: Procesando compra {purchase_id}")
+            
+            # Obtener canciones de esta compra
+            cursor.execute("""
+                SELECT idCancion
+                FROM CancionesCompra
+                WHERE idCompra = %s
+            """, (purchase_id,))
+            song_ids = [r[0] for r in cursor.fetchall()]
+            print(f"[DEBUG] get_user_purchases: Compra {purchase_id} - {len(song_ids)} canciones")
+            
+            # Obtener álbumes de esta compra
+            cursor.execute("""
+                SELECT idAlbum
+                FROM AlbumesCompra
+                WHERE idCompra = %s
+            """, (purchase_id,))
+            album_ids = [r[0] for r in cursor.fetchall()]
+            print(f"[DEBUG] get_user_purchases: Compra {purchase_id} - {len(album_ids)} álbumes")
+            
+            # Obtener merch de esta compra (con cantidad)
+            cursor.execute("""
+                SELECT idMerch, cantidad
+                FROM MerchCompra
+                WHERE idCompra = %s
+            """, (purchase_id,))
+            merch_items = cursor.fetchall()
+            merch_ids = [[r[0], r[1]] for r in merch_items]  # [[id, cantidad], ...]
+            print(f"[DEBUG] get_user_purchases: Compra {purchase_id} - {len(merch_ids)} items de merch")
+            
+            # Construir objeto de compra
+            purchase = {
+                'purchaseId': purchase_id,
+                'purchaseDate': fecha.isoformat() if fecha else None,
+                'purchasePrice': float(importe) if importe else 0.0,
+                'paymentMethodId': metodo_pago,
+                'songIds': song_ids,
+                'albumIds': album_ids,
+                'merchIds': merch_ids
+            }
+            purchases.append(purchase)
+        
+        cursor.close()
+        print(f"[DEBUG] get_user_purchases: Retornando {len(purchases)} compras")
+        return purchases, 200
+
+    except Exception as e:
+        print(f"[DEBUG] get_user_purchases: EXCEPCIÓN - {type(e).__name__}: {str(e)}")
         import traceback
         traceback.print_exc()
         return Error(code="500", message=str(e)).to_dict(), 500
