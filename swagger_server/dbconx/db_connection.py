@@ -31,4 +31,3 @@ def dbDesconectar(conexion):
     except DB.DatabaseError as error:
         print("Error en la desconexión")
         print(error)
-        return False
