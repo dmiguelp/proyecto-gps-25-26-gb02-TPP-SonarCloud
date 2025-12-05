@@ -2,11 +2,11 @@ import psycopg2 as DB
 from psycopg2.extensions import connection
 
 def dbConectar() -> connection:
-    ip = "10.1.1.1"
+    ip = "pgnweb.ddns.net"
     puerto = 5432
-    basedatos = "tpp"
+    basedatos = "pt"
 
-    usuario = "tpp_admin"
+    usuario = "pt_admin"
     contrasena = "12345"
 
     print("---dbConectar---")
@@ -25,7 +25,6 @@ def dbConectar() -> connection:
 def dbDesconectar(conexion):
     print("---dbDesconectar---")
     try:
-        conexion.commit()
         conexion.close()
         print("Desconexión realizada correctamente")
         return True
