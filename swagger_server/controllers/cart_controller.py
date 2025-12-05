@@ -82,12 +82,12 @@ def add_to_cart(body=None):
     print("[DEBUG] add_to_cart: Inicio de la función")
     db_conexion = None
     try:
-        print(f"[DEBUG] add_to_cart: Verificando si la petición es JSON")
+        print("[DEBUG] add_to_cart: Verificando si la petición es JSON")
         if not connexion.request.is_json:
             print("[DEBUG] add_to_cart: ERROR - La petición no es JSON")
             return Error(code="400", message="El cuerpo de la petición no es JSON").to_dict(), 400
         
-        print(f"[DEBUG] add_to_cart: Parseando body desde JSON")
+        print("[DEBUG] add_to_cart: Parseando body desde JSON")
         body = CartBody.from_dict(connexion.request.get_json())
         print(f"[DEBUG] add_to_cart: Body parseado - song_id={body.song_id}, album_id={body.album_id}, merch_id={body.merch_id}")
 
@@ -141,10 +141,10 @@ def add_to_cart(body=None):
             if cursor.fetchone():
                 print(f"[DEBUG] add_to_cart: ERROR - El merch {body.merch_id} ya está en el carrito")
                 return Error(code="400", message="El artículo ya está en el carrito").to_dict(), 400
-            print(f"[DEBUG] add_to_cart: Insertando merch en el carrito")
+            print("[DEBUG] add_to_cart: Insertando merch en el carrito")
             cursor.execute("INSERT INTO MerchCarrito (idMerch, idUsuario, unidades) VALUES (%s, %s, %s)",
                            (body.merch_id, user_id, body.unidades))
-            print(f"[DEBUG] add_to_cart: Merch insertado correctamente")
+            print("[DEBUG] add_to_cart: Merch insertado correctamente")
 
         else:
             print("[DEBUG] add_to_cart: ERROR - No se proporcionó songId, albumId ni merchId")
@@ -488,5 +488,6 @@ def remove_from_cart(product_id, type=None):
     finally:
         if db_conexion:
             db_desconectar(db_conexion)
+
 
 

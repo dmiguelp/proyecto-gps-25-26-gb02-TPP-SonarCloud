@@ -139,7 +139,7 @@ def set_purchase(body=None):
             print("[DEBUG] create_purchase: ERROR - La petición no es JSON")
             return Error(code="400", message="El cuerpo de la petición no es JSON").to_dict(), 400
         body = Purchase.from_dict(connexion.request.get_json())
-        print(f"[DEBUG] create_purchase: Body parseado correctamente")
+        print("[DEBUG] create_purchase: Body parseado correctamente")
         print(f"[DEBUG] create_purchase: Body recibido: {body.to_dict() if hasattr(body, 'to_dict') else body.__dict__}")
 
         # Obtener user_id del contexto (ya validado por check_oversound_auth)
@@ -232,7 +232,7 @@ def set_purchase(body=None):
                     )
                     total_deleted += cursor.rowcount
             else:
-                print(f"[DEBUG] create_purchase: ADVERTENCIA - No hay song_ids para eliminar del carrito")
+                print("[DEBUG] create_purchase: ADVERTENCIA - No hay song_ids para eliminar del carrito")
             
             # Eliminar álbumes del carrito
             if body.album_ids:
@@ -244,7 +244,7 @@ def set_purchase(body=None):
                     )
                     total_deleted += cursor.rowcount
             else:
-                print(f"[DEBUG] create_purchase: ADVERTENCIA - No hay album_ids para eliminar del carrito")
+                print("[DEBUG] create_purchase: ADVERTENCIA - No hay album_ids para eliminar del carrito")
             
             # Eliminar merchandising del carrito
             if body.merch_ids:
@@ -256,7 +256,7 @@ def set_purchase(body=None):
                     )
                     total_deleted += cursor.rowcount
             else:
-                print(f"[DEBUG] create_purchase: ADVERTENCIA - No hay merch_ids para eliminar del carrito")
+                print("[DEBUG] create_purchase: ADVERTENCIA - No hay merch_ids para eliminar del carrito")
             
             if total_deleted > 0:
                 print(f"[DEBUG] create_purchase: Carrito limpiado - {total_deleted} productos eliminados")
@@ -396,4 +396,5 @@ def get_user_purchases():
     finally:
         if db_conexion:
             db_desconectar(db_conexion)
+
 
