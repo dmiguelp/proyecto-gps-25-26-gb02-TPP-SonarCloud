@@ -48,7 +48,7 @@ from datetime import datetime
 from swagger_server.models.error import Error  # noqa: E501
 from swagger_server.models.purchase import Purchase  # noqa: E501
 from swagger_server import util
-from swagger_server.dbconx import dbConectar, dbDesconectar
+from swagger_server.dbconx import db_conectar, db_desconectar
 
 def set_purchase(body=None):
     """
@@ -150,7 +150,7 @@ def set_purchase(body=None):
 
         # Conexión con la base de datos
         print("[DEBUG] create_purchase: Conectando a la base de datos")
-        db_conexion = dbConectar()
+        db_conexion = db_conectar()
         if db_conexion is None:
             print("[DEBUG] create_purchase: ERROR - No se pudo conectar a la base de datos")
             return Error(code="503", message="Error al conectar con la base de datos").to_dict(), 503
@@ -286,7 +286,7 @@ def set_purchase(body=None):
 
     finally:
         if db_conexion:
-            dbDesconectar(db_conexion)
+            db_desconectar(db_conexion)
 
 
 def get_user_purchases():
@@ -319,7 +319,7 @@ def get_user_purchases():
 
         # Conectar a la base de datos
         print("[DEBUG] get_user_purchases: Conectando a la base de datos")
-        db_conexion = dbConectar()
+        db_conexion = db_conectar()
         if db_conexion is None:
             print("[DEBUG] get_user_purchases: ERROR - No se pudo conectar a la base de datos")
             return Error(code="503", message="Error al conectar con la base de datos").to_dict(), 503
@@ -395,4 +395,5 @@ def get_user_purchases():
 
     finally:
         if db_conexion:
-            dbDesconectar(db_conexion)
+            db_desconectar(db_conexion)
+

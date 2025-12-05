@@ -23,7 +23,7 @@ from swagger_server.test import BaseTestCase
 class TestPurchasesController(BaseTestCase):
     """PurchasesController integration test stubs"""
 
-    @patch('swagger_server.controllers.purchases_controller.dbConectar')
+    @patch('swagger_server.controllers.purchases_controller.db_conectar')
     @patch('swagger_server.controllers.purchases_controller.requests.post')
     def test_set_purchase(self, mock_post, mock_db):
         """Test case for set_purchase
@@ -93,4 +93,5 @@ class TestPurchasesController(BaseTestCase):
 if __name__ == '__main__':
     import unittest
     unittest.main()
+
 

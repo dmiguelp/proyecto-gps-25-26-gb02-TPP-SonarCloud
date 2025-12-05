@@ -17,7 +17,7 @@ from swagger_server.test import BaseTestCase
 class TestPaymentController(BaseTestCase):
     """PaymentController integration test stubs"""
 
-    @patch('swagger_server.controllers.payment_controller.dbConectar')
+    @patch('swagger_server.controllers.payment_controller.db_conectar')
     def test_add_payment_method(self, mock_db):
         """Test case for add_payment_method
         
@@ -47,7 +47,7 @@ class TestPaymentController(BaseTestCase):
         
         self.assert200(response, 'Response body is : ' + response.data.decode('utf-8'))
 
-    @patch('swagger_server.controllers.payment_controller.dbConectar')
+    @patch('swagger_server.controllers.payment_controller.db_conectar')
     def test_delete_payment_method(self, mock_db):
         """Test case for delete_payment_method
 
@@ -68,7 +68,7 @@ class TestPaymentController(BaseTestCase):
         
         self.assert200(response, 'Response body is : ' + response.data.decode('utf-8'))
 
-    @patch('swagger_server.controllers.payment_controller.dbConectar')
+    @patch('swagger_server.controllers.payment_controller.db_conectar')
     def test_show_user_payment_methods(self, mock_db):
         """Test case for show_user_payment_methods
         
@@ -93,4 +93,5 @@ class TestPaymentController(BaseTestCase):
 if __name__ == '__main__':
     import unittest
     unittest.main()
+
 

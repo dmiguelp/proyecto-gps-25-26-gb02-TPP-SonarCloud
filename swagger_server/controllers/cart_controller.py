@@ -32,7 +32,7 @@ from swagger_server.models.cart_body import CartBody  # noqa: E501
 from swagger_server.models.error import Error  # noqa: E501
 from swagger_server.models.product import Product  # noqa: E501
 from swagger_server import util
-from swagger_server.dbconx import dbConectar, dbDesconectar
+from swagger_server.dbconx import db_conectar, db_desconectar
 from swagger_server.controllers.config import TYA_SERVICE_URL
 
 
@@ -103,7 +103,7 @@ def add_to_cart(body=None):
         print(f"[DEBUG] add_to_cart: user_id obtenido = {user_id}")
 
         print("[DEBUG] add_to_cart: Conectando a la base de datos")
-        db_conexion = dbConectar()
+        db_conexion = db_conectar()
         if db_conexion is None:
             print("[DEBUG] add_to_cart: ERROR - No se pudo conectar a la base de datos")
             return Error(code="503", message="Error al conectar con la base de datos").to_dict(), 503
@@ -166,7 +166,7 @@ def add_to_cart(body=None):
 
     finally:
         if db_conexion:
-            dbDesconectar(db_conexion)
+            db_desconectar(db_conexion)
 
 
 
@@ -221,7 +221,7 @@ def get_cart_products():
         print(f"[DEBUG] get_cart_products: user_id obtenido = {user_id}")
 
         print("[DEBUG] get_cart_products: Conectando a la base de datos")
-        db_conexion = dbConectar()
+        db_conexion = db_conectar()
         if db_conexion is None:
             print("[DEBUG] get_cart_products: ERROR - No se pudo conectar a la base de datos")
             return Error(code="503", message="Error al conectar con la base de datos").to_dict(), 503
@@ -349,7 +349,7 @@ def get_cart_products():
         return Error(code="500", message=str(e)).to_dict(), 500
     finally:
         if db_conexion:
-            dbDesconectar(db_conexion)
+            db_desconectar(db_conexion)
 
 
 def remove_from_cart(product_id, type=None):
@@ -409,7 +409,7 @@ def remove_from_cart(product_id, type=None):
         # --- VERIFICAR TOKEN ---
 
         # Eliminar producto del carrito del usuario autenticado
-        db_conexion = dbConectar()
+        db_conexion = db_conectar()
         if db_conexion is None:
             print("[DEBUG] remove_from_cart: ERROR - No se pudo conectar a la base de datos")
             return Error(code="503", message="Error al conectar con la base de datos").to_dict(), 503
@@ -487,4 +487,6 @@ def remove_from_cart(product_id, type=None):
 
     finally:
         if db_conexion:
-            dbDesconectar(db_conexion)
+            db_desconectar(db_conexion)
+
+
