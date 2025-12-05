@@ -100,7 +100,7 @@ def add_payment_method(body=None):
             print("[DEBUG] add_payment_method: ERROR - La petición no es JSON")
             return Error(code="400", message="El cuerpo de la petición no es JSON").to_dict(), 400
         body = PaymentMethod.from_dict(connexion.request.get_json())
-        print(f"[DEBUG] add_payment_method: Body parseado correctamente")
+        print("[DEBUG] add_payment_method: Body parseado correctamente")
 
         # Obtener user_id del contexto (ya validado por check_oversound_auth)
         print("[DEBUG] add_payment_method: Obteniendo user_id del contexto")
@@ -368,4 +368,5 @@ def show_user_payment_methods():
     finally:
         if db_conexion:
             db_desconectar(db_conexion)
+
 
