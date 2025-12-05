@@ -1,7 +1,8 @@
 import psycopg2 as DB
 from psycopg2.extensions import connection
+from typing import Optional
 
-def db_conectar() -> connection:
+def db_conectar() -> Optional[connection]:
     ip = "pgnweb.ddns.net"
     puerto = 5432
     basedatos = "pt"
