@@ -18,7 +18,7 @@ from swagger_server.test import BaseTestCase
 class TestCartController(BaseTestCase):
     """CartController integration test stubs"""
 
-    @patch('swagger_server.controllers.cart_controller.dbConectar')
+    @patch('swagger_server.controllers.cart_controller.db_conectar')
     def test_add_to_cart(self, mock_db):
         """Test case for add_to_cart
         
@@ -44,7 +44,7 @@ class TestCartController(BaseTestCase):
         
         self.assert200(response, 'Response body is : ' + response.data.decode('utf-8'))
 
-    @patch('swagger_server.controllers.cart_controller.dbConectar')
+    @patch('swagger_server.controllers.cart_controller.db_conectar')
     def test_get_cart_products(self, mock_db):
         """Test case for get_cart_products
         
@@ -65,7 +65,7 @@ class TestCartController(BaseTestCase):
         
         self.assert200(response, 'Response body is : ' + response.data.decode('utf-8'))
 
-    @patch('swagger_server.controllers.cart_controller.dbConectar')
+    @patch('swagger_server.controllers.cart_controller.db_conectar')
     def test_remove_from_cart(self, mock_db):
         """Test case for remove_from_cart
         
@@ -104,4 +104,5 @@ class TestCartController(BaseTestCase):
 if __name__ == '__main__':
     import unittest
     unittest.main()
+
 

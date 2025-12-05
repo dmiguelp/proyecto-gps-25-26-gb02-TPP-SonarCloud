@@ -34,7 +34,7 @@ import requests
 from swagger_server.models.error import Error  # noqa: E501
 from swagger_server.models.payment_method import PaymentMethod  # noqa: E501
 from swagger_server import util
-from swagger_server.dbconx import dbConectar, dbDesconectar
+from swagger_server.dbconx import db_conectar, db_desconectar
 
 
 def add_payment_method(body=None):
@@ -111,7 +111,7 @@ def add_payment_method(body=None):
 
         # Conexión a la base de datos
         print("[DEBUG] add_payment_method: Conectando a la base de datos")
-        db_conexion = dbConectar()
+        db_conexion = db_conectar()
         if db_conexion is None:
             print("[DEBUG] add_payment_method: ERROR - No se pudo conectar a la base de datos")
             return Error(code="503", message="Error al conectar con la base de datos").to_dict(), 503
@@ -166,7 +166,7 @@ def add_payment_method(body=None):
 
     finally:
         if db_conexion:
-            dbDesconectar(db_conexion)
+            db_desconectar(db_conexion)
 
 
 def delete_payment_method(payment_method_id):
@@ -213,7 +213,7 @@ def delete_payment_method(payment_method_id):
         print(f"[DEBUG] delete_payment_method: user_id obtenido = {user_id}, payment_method_id = {payment_method_id}")
 
         print("[DEBUG] delete_payment_method: Conectando a la base de datos")
-        db_conexion = dbConectar()
+        db_conexion = db_conectar()
         if db_conexion is None:
             print("[DEBUG] delete_payment_method: ERROR - No se pudo conectar a la base de datos")
             return Error(code="503", message="Error al conectar con la base de datos").to_dict(), 503
@@ -255,7 +255,7 @@ def delete_payment_method(payment_method_id):
 
     finally:
         if db_conexion:
-            dbDesconectar(db_conexion)
+            db_desconectar(db_conexion)
 
 
 def show_user_payment_methods():
@@ -322,7 +322,7 @@ def show_user_payment_methods():
         user_id = user_info.get('userId') or user_info.get('id')
 
         # Consultar la base de datos con el user_id
-        db_conexion = dbConectar()
+        db_conexion = db_conectar()
         if db_conexion is None:
             print("[DEBUG] get_payment_methods: ERROR - No se pudo conectar a la base de datos")
             return Error(code="503", message="Error al conectar con la base de datos").to_dict(), 503
@@ -367,4 +367,5 @@ def show_user_payment_methods():
 
     finally:
         if db_conexion:
-            dbDesconectar(db_conexion)
+            db_desconectar(db_conexion)
+

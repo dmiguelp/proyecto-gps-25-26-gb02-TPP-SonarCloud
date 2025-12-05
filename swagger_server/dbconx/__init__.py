@@ -1,3 +1,3 @@
-from .db_connection import dbConectar, dbDesconectar
+from .db_connection import db_conectar, db_desconectar
 
-__all__ = ['dbConectar', 'dbDesconectar']
+__all__ = ['db_conectar', 'db_desconectar']
