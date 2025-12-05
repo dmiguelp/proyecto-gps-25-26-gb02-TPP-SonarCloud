@@ -82,12 +82,12 @@ def add_to_cart(body=None):
     print("[DEBUG] add_to_cart: Inicio de la función")
     db_conexion = None
     try:
-        print(f"[DEBUG] add_to_cart: Verificando si la petición es JSON")
+        print("[DEBUG] add_to_cart: Verificando si la petición es JSON")
         if not connexion.request.is_json:
             print("[DEBUG] add_to_cart: ERROR - La petición no es JSON")
             return Error(code="400", message="El cuerpo de la petición no es JSON").to_dict(), 400
         
-        print(f"[DEBUG] add_to_cart: Parseando body desde JSON")
+        print("[DEBUG] add_to_cart: Parseando body desde JSON")
         body = CartBody.from_dict(connexion.request.get_json())
         print(f"[DEBUG] add_to_cart: Body parseado - song_id={body.song_id}, album_id={body.album_id}, merch_id={body.merch_id}")
 
